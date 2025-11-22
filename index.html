@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文小學堂 (Ver 14.1 Integrated)</title>
+    <title>英文小學堂 (Ver 14.2 Upload Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -28,7 +28,7 @@
                 <i class="fa-solid fa-cloud-arrow-up"></i>
             </div>
             <h1 class="text-3xl font-extrabold text-slate-800">英文小學堂</h1>
-            <p class="text-indigo-600 font-bold text-sm mt-2 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full">Ver 14.1 Cloud Integrated</p>
+            <p class="text-indigo-600 font-bold text-sm mt-2 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full">Ver 14.2 Upload Fix</p>
 
             <div class="space-y-4 text-left">
                 <div>
@@ -104,8 +104,8 @@
 
     <div id="screen-loading" class="hidden fixed inset-0 z-[50] bg-white/90 flex flex-col items-center justify-center p-4">
         <div class="loader mb-6"></div>
-        <h2 class="text-2xl font-black text-slate-800 mb-2">AI 老師出卷中...</h2>
-        <p class="text-slate-500" id="loading-text">Generating...</p>
+        <h2 class="text-2xl font-black text-slate-800 mb-2">AI 準備考卷中...</h2>
+        <p class="text-slate-500" id="loading-text">Connecting...</p>
     </div>
 
     <div id="screen-game" class="hidden flex-col min-h-screen bg-slate-50">
@@ -134,13 +134,18 @@
         <div class="bg-white w-full max-w-md rounded-3xl p-8 text-center">
             <div class="w-24 h-24 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-4"><i class="fa-solid fa-trophy"></i></div>
             <h2 class="text-3xl font-black text-slate-800 mb-2">測驗結束</h2>
-            <p id="upload-status" class="text-xs text-gray-400 mb-6 h-4">等待上傳...</p>
-            <div class="grid grid-cols-3 gap-4 mb-8">
+            
+            <div class="mb-4">
+                <p id="upload-status" class="text-sm text-gray-500 font-bold"><i class="fa-solid fa-circle-notch fa-spin"></i> 正在上傳記錄...</p>
+                <button onclick="sys_uploadLog()" class="text-xs text-blue-500 underline mt-1 hover:text-blue-700">手動重試</button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-6">
                 <div class="bg-green-50 p-3 rounded-xl border border-green-200"><div class="text-green-600 font-black text-2xl" id="end-correct">0</div><div class="text-xs text-green-600 uppercase font-bold">Correct</div></div>
                 <div class="bg-red-50 p-3 rounded-xl border border-red-200"><div class="text-red-500 font-black text-2xl" id="end-wrong">0</div><div class="text-xs text-red-500 uppercase font-bold">Wrong</div></div>
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-200"><div class="text-blue-600 font-black text-2xl" id="end-score">0</div><div class="text-xs text-blue-600 uppercase font-bold">Score</div></div>
             </div>
-            <p id="mistake-alert" class="text-red-500 font-bold mb-4 hidden text-sm"><i class="fa-solid fa-circle-exclamation"></i> 新增了錯題！</p>
+            <p id="mistake-alert" class="text-red-500 font-bold mb-4 hidden text-sm"><i class="fa-solid fa-circle-exclamation"></i> 新增錯題，請記得複習！</p>
             <button onclick="game_prepareBatch()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl mb-3">再玩一次</button>
             <button onclick="sys_showScreen('screen-settings')" class="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-xl">回主選單</button>
         </div>
@@ -149,11 +154,10 @@
     <script>
         const USERS = {'Dora':'6721','Admin':'admin'};
         const MODEL = 'gemini-2.0-flash-exp'; 
-        const KEY_STORAGE = 'gemini_key_v23';
+        const KEY_STORAGE = 'gemini_key_v24'; // v24
         const GAS_STORAGE = 'gas_url_v1';
         const MISTAKE_STORAGE = 'mistakes_v1';
         
-        // 您的 Google Script URL
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyYEGJslt_eB3PL0AkXNxa3wBCbGfChEAv0bYJzVFWmTVZe9YQbIGwzTnqJhHV_VLc-Ng/exec";
 
         let config={diff:'high',total:10,time:0,autoplay:true}, state={qIdx:0,correct:0,wrong:0,score:0,timer:null}, currentMode='vocab', questionBank=[], sentBuffer=[];
@@ -225,9 +229,7 @@
                 const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${k}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:"Hi"}]}]})});
                 if(r.ok){
                     localStorage.setItem(KEY_STORAGE,k);
-                    // Save the GAS URL if user modified it, otherwise keep default
                     if(gas) localStorage.setItem(GAS_STORAGE, gas);
-                    
                     m.innerText="Success!";m.className="mb-4 p-3 rounded text-sm font-bold bg-green-100 text-green-700 block";
                     setTimeout(()=>sys_showScreen('screen-settings'),1000)
                 }else throw new Error("Invalid Key");
@@ -240,14 +242,13 @@
 
         // --- Upload to GAS ---
         function sys_uploadLog() {
-            // Use stored URL or the default provided one
             const gasUrl = localStorage.getItem(GAS_STORAGE) || DEFAULT_GAS_URL;
             const status = document.getElementById('upload-status');
             
             if (!gasUrl) { status.innerText = "未設定 Google Sheet"; return; }
 
-            status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 上傳記錄中...';
-            status.className = "text-xs text-indigo-500 mb-6 h-4 font-bold";
+            status.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> 正在上傳記錄...';
+            status.className = "text-sm text-blue-600 font-bold mb-6 h-4";
 
             const payload = {
                 user: document.getElementById('login-user').value,
@@ -261,16 +262,16 @@
 
             fetch(gasUrl, {
                 method: 'POST',
-                mode: 'no-cors',
+                mode: 'no-cors', // Important for GAS
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                status.innerHTML = '<i class="fa-solid fa-check"></i> 記錄已上傳';
-                status.className = "text-xs text-green-500 mb-6 h-4 font-bold";
+                status.innerHTML = '<i class="fa-solid fa-check-circle"></i> 上傳成功！';
+                status.className = "text-sm text-green-600 font-bold mb-6 h-4";
             }).catch(e => {
                 console.error(e);
-                status.innerText = "上傳失敗";
-                status.className = "text-xs text-red-400 mb-6 h-4";
+                status.innerText = "上傳失敗，請檢查網路或網址";
+                status.className = "text-sm text-red-500 font-bold mb-6 h-4";
             });
         }
 
@@ -345,7 +346,7 @@
             document.getElementById('end-score').innerText=state.score;
             document.getElementById('mistake-alert').classList.toggle('hidden', state.wrong === 0);
             sys_showScreen('screen-summary');
-            sys_uploadLog(); // Auto Upload
+            sys_uploadLog(); // Trigger upload
         }
 
         const MODES=[
@@ -369,7 +370,7 @@
         function game_getBatchPrompt(count){
             let diff="Grade 5-6";
             if(config.diff==='preschool')diff="Preschool";if(config.diff==='low')diff="Grade 1-2";if(config.diff==='mid')diff="Grade 3-4";if(config.diff==='grad')diff="Grade 6+";
-            const base=`Role: English Teacher. Level: ${diff}. Mode: ${currentMode}. Task: Generate ${count} UNIQUE questions. Rules: 1.JSON Array. 2.speak_text English ONLY. 3. "answer" MUST be the FULL TEXT of correct option (NO A/B/C/D). Schema: {"type":"string","prompt":"string","speak_text":"string","hint":"string","options":["A","B","C","D"],"answer":"string","explain":"string"}`;
+            const base=`Role: English Teacher. Level: ${diff}. Mode: ${currentMode}. Task: Generate ${count} UNIQUE questions. Rules: 1.JSON Array. 2.speak_text English ONLY. 3. "answer" MUST be FULL TEXT of correct option. Schema: {"type":"string","prompt":"string","speak_text":"string","hint":"string","options":["A","B","C","D"],"answer":"string","explain":"string"}`;
             if(currentMode==='vocab')return base+` Content: Vocab MCQ. prompt: "請問 [English Word] 的中文?". options: 4 Chinese.`;
             if(currentMode==='grammar')return base+` Content: Grammar MCQ. prompt: Sentence with ____. options: 4 choices.`;
             if(currentMode==='usage')return base+` Content: Usage MCQ. prompt: Sentence with ____. options: 4 choices.`;
