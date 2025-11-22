@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文小學堂 (Ver 15.2 Final)</title>
+    <title>英文小學堂 (Ver 16.0 Final)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -25,10 +25,10 @@
     <div id="screen-login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm">
         <div class="glass p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border border-white">
             <div class="w-20 h-20 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-                <i class="fa-solid fa-user-graduate"></i>
+                <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <h1 class="text-3xl font-extrabold text-slate-800">英文小學堂</h1>
-            <p class="text-indigo-600 font-bold text-sm mt-2 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full">Ver 15.2 Restored</p>
+            <p class="text-indigo-600 font-bold text-sm mt-2 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full">Ver 16.0 Final</p>
 
             <div class="space-y-4 text-left">
                 <div>
@@ -55,10 +55,13 @@
                 <input type="password" id="api-key-input" placeholder="貼上 API Key..." class="w-full p-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-mono text-sm">
             </div>
 
-            <div class="text-left mb-6">
-                <label class="font-bold text-slate-600 text-sm block mb-1">2. Google Sheet URL (記錄成績)</label>
+            <div class="text-left mb-6 relative">
+                <label class="font-bold text-slate-600 text-sm block mb-1">
+                    2. Google Sheet URL (記錄成績)
+                    <button onclick="document.getElementById('gas-url-input').value=''" class="float-right text-xs text-red-400 hover:text-red-600 underline">清空</button>
+                </label>
                 <textarea id="gas-url-input" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-mono text-xs text-slate-500 break-all" placeholder="https://script.google.com/..."></textarea>
-                <p class="text-xs text-gray-400 mt-1">貼上您的 Apps Script 網址</p>
+                <p class="text-xs text-gray-400 mt-1">可隨時貼上新的 Apps Script 網址</p>
             </div>
             
             <div id="validation-msg" class="hidden mb-4 p-3 rounded text-sm font-bold"></div>
@@ -151,11 +154,11 @@
     <script>
         const USERS = {'Dora':'6721','Admin':'admin'};
         const MODEL = 'gemini-2.0-flash-exp'; 
-        const KEY_STORAGE = 'gemini_key_v25';
-        const GAS_STORAGE = 'gas_url_v3';
+        const KEY_STORAGE = 'gemini_key_v26'; // Version up
+        const GAS_STORAGE = 'gas_url_v2';
         const MISTAKE_STORAGE = 'mistakes_v1';
         
-        // 預設 GAS URL，使用者可以在 UI 覆蓋
+        // 預設值 (當使用者還沒設定時使用)
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyYEGJslt_eB3PL0AkXNxa3wBCbGfChEAv0bYJzVFWmTVZe9YQbIGwzTnqJhHV_VLc-Ng/exec";
 
         let config={diff:'high',total:10,time:0,autoplay:true}, state={qIdx:0,correct:0,wrong:0,score:0,timer:null}, currentMode='vocab', questionBank=[], sentBuffer=[];
@@ -215,14 +218,13 @@
         
         function sys_login(){const u=document.getElementById('login-user').value.trim(),p=document.getElementById('login-pass').value.trim();if(USERS[u]&&USERS[u]===p){util_speak('');const k=localStorage.getItem(KEY_STORAGE);if(k)sys_showScreen('screen-settings');else sys_showScreen('screen-setup');initVoices();loadMistakes();}else document.getElementById('login-error').classList.remove('hidden')}
         
-        // --- Settings Functions ---
         function sys_editSettings() {
-            // 把已經存的資料填回去，方便修改
             const k = localStorage.getItem(KEY_STORAGE);
+            // 優先讀取使用者存的，如果沒有才讀取預設的
             const gas = localStorage.getItem(GAS_STORAGE) || DEFAULT_GAS_URL;
             
             if(k) document.getElementById('api-key-input').value = k;
-            if(gas) document.getElementById('gas-url-input').value = gas;
+            document.getElementById('gas-url-input').value = gas;
             
             sys_showScreen('screen-setup');
         }
@@ -247,7 +249,9 @@
                 const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${k}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:"Hi"}]}]})});
                 if(r.ok){
                     localStorage.setItem(KEY_STORAGE,k);
+                    // 只要欄位有值，就存起來 (覆蓋預設值)
                     if(gas) localStorage.setItem(GAS_STORAGE, gas);
+                    
                     m.innerText="Success!";m.className="mb-4 p-3 rounded text-sm font-bold bg-green-100 text-green-700 block";
                     setTimeout(()=>sys_showScreen('screen-settings'),1000)
                 }else throw new Error("Invalid Key");
@@ -258,7 +262,7 @@
         function sys_resetKey(){if(confirm("Reset?")){localStorage.removeItem(KEY_STORAGE);sys_showScreen('screen-setup')}}
         function sys_getApiKey(){return localStorage.getItem(KEY_STORAGE)}
 
-        // --- Upload to GAS ---
+        // --- Upload ---
         function sys_uploadLog() {
             const gasUrl = localStorage.getItem(GAS_STORAGE) || DEFAULT_GAS_URL;
             const status = document.getElementById('upload-status');
@@ -383,7 +387,7 @@
             }).join('');
         }
         
-        function game_changeMode(m){ if(confirm("Switching mode will restart.")) { currentMode=m; game_prepareBatch(); } }
+        function game_changeMode(m){ if(confirm("Change mode will restart?")) { currentMode=m; game_prepareBatch(); } }
 
         function game_getBatchPrompt(count){
             let diff="Grade 5-6";
