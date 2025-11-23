@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文小學堂 (Ver 16.0 Final)</title>
+    <title>英文小學堂 (Ver 17.0 Hybrid DB)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -25,10 +25,10 @@
     <div id="screen-login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm">
         <div class="glass p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border border-white">
             <div class="w-20 h-20 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-                <i class="fa-solid fa-graduation-cap"></i>
+                <i class="fa-solid fa-database"></i>
             </div>
             <h1 class="text-3xl font-extrabold text-slate-800">英文小學堂</h1>
-            <p class="text-indigo-600 font-bold text-sm mt-2 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full">Ver 16.0 Final</p>
+            <p class="text-indigo-600 font-bold text-sm mt-2 mb-6 bg-indigo-50 inline-block px-3 py-1 rounded-full">Ver 17.0 Hybrid DB</p>
 
             <div class="space-y-4 text-left">
                 <div>
@@ -47,26 +47,19 @@
 
     <div id="screen-setup" class="hidden fixed inset-0 z-[60] bg-slate-900 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl text-center h-[85vh] overflow-y-auto">
-            <div class="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-gear"></i></div>
             <h3 class="text-2xl font-bold mb-2">系統設定</h3>
-            
             <div class="text-left mb-6">
-                <label class="font-bold text-slate-600 text-sm block mb-1">1. Gemini API Key (必填)</label>
+                <label class="font-bold text-slate-600 text-sm block mb-1">1. Gemini API Key</label>
                 <input type="password" id="api-key-input" placeholder="貼上 API Key..." class="w-full p-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-mono text-sm">
             </div>
-
-            <div class="text-left mb-6 relative">
-                <label class="font-bold text-slate-600 text-sm block mb-1">
-                    2. Google Sheet URL (記錄成績)
-                    <button onclick="document.getElementById('gas-url-input').value=''" class="float-right text-xs text-red-400 hover:text-red-600 underline">清空</button>
-                </label>
+            <div class="text-left mb-6">
+                <label class="font-bold text-slate-600 text-sm block mb-1">2. Google Sheet URL (題庫/錯題)</label>
                 <textarea id="gas-url-input" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-mono text-xs text-slate-500 break-all" placeholder="https://script.google.com/..."></textarea>
-                <p class="text-xs text-gray-400 mt-1">可隨時貼上新的 Apps Script 網址</p>
+                <p class="text-xs text-green-600 mt-1 font-bold"><i class="fa-solid fa-check"></i> 連結題庫倉庫</p>
             </div>
-            
             <div id="validation-msg" class="hidden mb-4 p-3 rounded text-sm font-bold"></div>
             <button id="btn-validate" onclick="sys_validateKey()" class="w-full py-3 bg-green-500 text-white rounded-xl font-bold shadow mb-3">驗證並儲存</button>
-            <button onclick="sys_cancelSetup()" class="w-full py-3 bg-gray-100 text-gray-500 rounded-xl font-bold">取消 / 返回</button>
+            <button onclick="sys_cancelSetup()" class="w-full py-3 bg-gray-100 text-gray-500 rounded-xl font-bold">取消</button>
         </div>
     </div>
 
@@ -74,12 +67,7 @@
         <div class="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8 border border-indigo-100">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-black text-slate-800"><i class="fa-solid fa-sliders text-indigo-500 mr-2"></i> 測驗設定</h2>
-                <div class="flex gap-2">
-                    <span class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold flex items-center"><i class="fa-solid fa-bug mr-1"></i> 錯題: <span id="mistake-count" class="ml-1">0</span></span>
-                    <button onclick="sys_editSettings()" class="text-xs border border-indigo-200 bg-indigo-50 px-3 py-1 rounded-full text-indigo-600 font-bold hover:bg-indigo-100 hover:border-indigo-300 transition-colors">
-                        <i class="fa-solid fa-gear mr-1"></i> 系統設定
-                    </button>
-                </div>
+                <button onclick="sys_editSettings()" class="text-xs border border-indigo-200 bg-indigo-50 px-3 py-1 rounded-full text-indigo-600 font-bold hover:bg-indigo-100"><i class="fa-solid fa-gear mr-1"></i> 設定</button>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -97,8 +85,7 @@
                 </div>
                 <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
                     <label class="font-bold text-slate-700 flex items-center cursor-pointer">
-                        <input type="checkbox" id="set-autoplay" class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mr-2" checked>
-                        <i class="fa-solid fa-volume-high mr-2 text-indigo-500"></i> 自動發音
+                        <input type="checkbox" id="set-autoplay" class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mr-2" checked> <i class="fa-solid fa-volume-high mr-2 text-indigo-500"></i> 自動發音
                     </label>
                 </div>
             </div>
@@ -109,8 +96,8 @@
 
     <div id="screen-loading" class="hidden fixed inset-0 z-[50] bg-white/90 flex flex-col items-center justify-center p-4">
         <div class="loader mb-6"></div>
-        <h2 class="text-2xl font-black text-slate-800 mb-2">AI 老師出卷中...</h2>
-        <p class="text-slate-500" id="loading-text">Connecting...</p>
+        <h2 class="text-2xl font-black text-slate-800 mb-2">題庫檢索中...</h2>
+        <p class="text-slate-500" id="loading-text">Connecting Database...</p>
     </div>
 
     <div id="screen-game" class="hidden flex-col min-h-screen bg-slate-50">
@@ -145,7 +132,6 @@
                 <div class="bg-red-50 p-3 rounded-xl border border-red-200"><div class="text-red-500 font-black text-2xl" id="end-wrong">0</div><div class="text-xs text-red-500 uppercase font-bold">Wrong</div></div>
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-200"><div class="text-blue-600 font-black text-2xl" id="end-score">0</div><div class="text-xs text-blue-600 uppercase font-bold">Score</div></div>
             </div>
-            <p id="mistake-alert" class="text-red-500 font-bold mb-4 hidden text-sm"><i class="fa-solid fa-circle-exclamation"></i> 新增了錯題！</p>
             <button onclick="game_prepareBatch()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl mb-3">再玩一次</button>
             <button onclick="sys_showScreen('screen-settings')" class="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-xl">回主選單</button>
         </div>
@@ -154,16 +140,15 @@
     <script>
         const USERS = {'Dora':'6721','Admin':'admin'};
         const MODEL = 'gemini-2.0-flash-exp'; 
-        const KEY_STORAGE = 'gemini_key_v26'; // Version up
-        const GAS_STORAGE = 'gas_url_v2';
-        const MISTAKE_STORAGE = 'mistakes_v1';
+        const KEY_STORAGE = 'gemini_key_v27';
+        const GAS_STORAGE = 'gas_url_v4';
         
-        // 預設值 (當使用者還沒設定時使用)
+        // Default GAS URL
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyYEGJslt_eB3PL0AkXNxa3wBCbGfChEAv0bYJzVFWmTVZe9YQbIGwzTnqJhHV_VLc-Ng/exec";
 
         let config={diff:'high',total:10,time:0,autoplay:true}, state={qIdx:0,correct:0,wrong:0,score:0,timer:null}, currentMode='vocab', questionBank=[], sentBuffer=[];
         let selectedVoice = null;
-        let mistakeDB = [];
+        let sheetWarehouse = []; // 儲存從 Sheet 下載的題庫
 
         function initVoices() {
             if (!window.speechSynthesis) return;
@@ -174,84 +159,39 @@
             load(); window.speechSynthesis.onvoiceschanged = load;
         }
 
-        function loadMistakes() {
-            const data = localStorage.getItem(MISTAKE_STORAGE);
-            mistakeDB = data ? JSON.parse(data) : [];
-            document.getElementById('mistake-count').innerText = mistakeDB.length;
-        }
-
-        function saveMistake(questionItem) {
-            const exists = mistakeDB.find(m => m.prompt === questionItem.prompt);
-            if (!exists) {
-                mistakeDB.push({ ...questionItem, mastery: 0, mode: currentMode });
-                localStorage.setItem(MISTAKE_STORAGE, JSON.stringify(mistakeDB));
-                loadMistakes();
-            } else {
-                if(exists.mastery > 0) {
-                    exists.mastery = Math.max(0, exists.mastery - 1);
-                    localStorage.setItem(MISTAKE_STORAGE, JSON.stringify(mistakeDB));
-                }
-            }
-        }
-
-        function updateMistakeMastery(questionItem) {
-            const index = mistakeDB.findIndex(m => m.prompt === questionItem.prompt);
-            if (index !== -1) {
-                mistakeDB[index].mastery += 1;
-                if (mistakeDB[index].mastery >= 10) {
-                    mistakeDB.splice(index, 1);
-                    util_speak("Mastered!");
-                }
-                localStorage.setItem(MISTAKE_STORAGE, JSON.stringify(mistakeDB));
-                loadMistakes();
-            }
-        }
-
         // --- Core System ---
         function sys_showScreen(id){
             game_stopTimer();
             document.querySelectorAll('[id^="screen-"]').forEach(el=>{el.classList.add('hidden');el.classList.remove('flex')});
             const t=document.getElementById(id);t.classList.remove('hidden');
             if(id!=='screen-game')t.classList.add('flex');else t.classList.add('flex');
-            if(id==='screen-settings') loadMistakes();
         }
         
-        function sys_login(){const u=document.getElementById('login-user').value.trim(),p=document.getElementById('login-pass').value.trim();if(USERS[u]&&USERS[u]===p){util_speak('');const k=localStorage.getItem(KEY_STORAGE);if(k)sys_showScreen('screen-settings');else sys_showScreen('screen-setup');initVoices();loadMistakes();}else document.getElementById('login-error').classList.remove('hidden')}
+        function sys_login(){const u=document.getElementById('login-user').value.trim(),p=document.getElementById('login-pass').value.trim();if(USERS[u]&&USERS[u]===p){util_speak('');const k=localStorage.getItem(KEY_STORAGE);if(k)sys_showScreen('screen-settings');else sys_showScreen('screen-setup');initVoices();}else document.getElementById('login-error').classList.remove('hidden')}
         
         function sys_editSettings() {
             const k = localStorage.getItem(KEY_STORAGE);
-            // 優先讀取使用者存的，如果沒有才讀取預設的
             const gas = localStorage.getItem(GAS_STORAGE) || DEFAULT_GAS_URL;
-            
             if(k) document.getElementById('api-key-input').value = k;
             document.getElementById('gas-url-input').value = gas;
-            
             sys_showScreen('screen-setup');
         }
 
         function sys_cancelSetup() {
-            if (localStorage.getItem(KEY_STORAGE)) {
-                sys_showScreen('screen-settings');
-            } else {
-                sys_showScreen('screen-login');
-            }
+            if (localStorage.getItem(KEY_STORAGE)) sys_showScreen('screen-settings'); else sys_showScreen('screen-login');
         }
 
         async function sys_validateKey(){
             const k=document.getElementById('api-key-input').value.trim();
             const gas=document.getElementById('gas-url-input').value.trim();
             const m=document.getElementById('validation-msg'),b=document.getElementById('btn-validate');
-            
             if(!k)return alert("Enter Key");
             b.disabled=true;b.innerText="Testing...";
-            
             try{
                 const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${k}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:"Hi"}]}]})});
                 if(r.ok){
                     localStorage.setItem(KEY_STORAGE,k);
-                    // 只要欄位有值，就存起來 (覆蓋預設值)
                     if(gas) localStorage.setItem(GAS_STORAGE, gas);
-                    
                     m.innerText="Success!";m.className="mb-4 p-3 rounded text-sm font-bold bg-green-100 text-green-700 block";
                     setTimeout(()=>sys_showScreen('screen-settings'),1000)
                 }else throw new Error("Invalid Key");
@@ -261,18 +201,18 @@
         }
         function sys_resetKey(){if(confirm("Reset?")){localStorage.removeItem(KEY_STORAGE);sys_showScreen('screen-setup')}}
         function sys_getApiKey(){return localStorage.getItem(KEY_STORAGE)}
+        function sys_getGasUrl(){return localStorage.getItem(GAS_STORAGE) || DEFAULT_GAS_URL;}
 
-        // --- Upload ---
+        // --- GAS: Score Upload & Mistake Save ---
         function sys_uploadLog() {
-            const gasUrl = localStorage.getItem(GAS_STORAGE) || DEFAULT_GAS_URL;
+            const gasUrl = sys_getGasUrl();
             const status = document.getElementById('upload-status');
             
-            if (!gasUrl) { status.innerText = "未設定 Google Sheet"; return; }
-
-            status.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-indigo-500"></i> 正在上傳記錄...';
+            status.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-indigo-500"></i> 上傳成績中...';
             status.className = "text-sm text-indigo-600 font-bold mb-6 h-4";
 
             const payload = {
+                action: 'log_score', // 指定動作
                 user: document.getElementById('login-user').value,
                 difficulty: config.diff,
                 mode: currentMode,
@@ -282,22 +222,40 @@
                 settings: `${config.total}題 / ${config.time}秒`
             };
 
-            fetch(gasUrl, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(() => {
+            fetch(gasUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+            .then(() => {
                 status.innerHTML = '<i class="fa-solid fa-check-circle"></i> 記錄已上傳';
                 status.className = "text-sm text-green-600 font-bold mb-6 h-4";
-            }).catch(e => {
-                console.error(e);
-                status.innerText = "上傳失敗";
-                status.className = "text-sm text-red-400 mb-6 h-4";
-            });
+            }).catch(e => { console.error(e); status.innerText = "上傳失敗"; status.className = "text-sm text-red-400 mb-6 h-4"; });
         }
 
-        // --- Batch & Modes ---
+        function sys_saveMistake(data) {
+            const gasUrl = sys_getGasUrl();
+            const payload = {
+                action: 'save_mistake',
+                user: document.getElementById('login-user').value,
+                word: data.speak_text, // 用英文當 Key
+                chinese: data.answer,  // 中文解釋 (若是其他模式，可能要調整)
+                mode: currentMode
+            };
+            // 背景靜默上傳
+            fetch(gasUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        }
+
+        function sys_updateMastery(data) {
+            // 只有在複習模式才更新
+            if (currentMode !== 'review') return;
+            const gasUrl = sys_getGasUrl();
+            const payload = {
+                action: 'update_mastery',
+                user: document.getElementById('login-user').value,
+                word: data.speak_text
+            };
+            fetch(gasUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        }
+
+        // --- Data Handling (Hybrid) ---
+        
         async function game_prepareBatch() {
             game_stopTimer();
             config.diff=document.getElementById('set-diff').value;
@@ -305,17 +263,74 @@
             config.time=parseInt(document.getElementById('set-timer').value);
             config.autoplay=document.getElementById('set-autoplay').checked;
 
+            sys_showScreen('screen-loading');
+            const user = document.getElementById('login-user').value;
+
+            // 1. 錯題複習模式：從 GAS 拉資料
             if (currentMode === 'review') {
-                if (mistakeDB.length === 0) { alert("目前沒有錯題！"); return; }
-                const shuffled = [...mistakeDB].sort(() => 0.5 - Math.random());
-                questionBank = shuffled.slice(0, config.total);
+                document.getElementById('loading-text').innerText = "下載錯題本...";
+                try {
+                    const res = await fetch(`${sys_getGasUrl()}?action=get_mistakes&user=${user}`);
+                    const data = await res.json();
+                    if (!data || data.length === 0) { alert("太棒了！目前沒有錯題。"); sys_showScreen('screen-settings'); return; }
+                    
+                    // 轉換格式
+                    questionBank = data.map(m => ({
+                        type: 'Review',
+                        prompt: `請問 [${m.word}] 的意思?`,
+                        speak_text: m.word,
+                        answer: m.chinese,
+                        mastery: m.mastery,
+                        options: generateOptionsFromWarehouse(m.chinese), // 從題庫補選項
+                        mode: 'vocab' // 預設為單字題型
+                    })).slice(0, config.total);
+                    
+                    game_start();
+                } catch (e) {
+                    console.error(e); alert("錯題下載失敗"); sys_showScreen('screen-settings');
+                }
+                return;
+            }
+
+            // 2. 一般模式：先看 Sheet 倉庫，不夠再找 AI
+            document.getElementById('loading-text').innerText = "檢索題庫 (Google Sheet)...";
+            
+            // 下載題庫 (如果還沒下載過)
+            if (sheetWarehouse.length === 0) {
+                try {
+                    const res = await fetch(`${sys_getGasUrl()}?action=get_warehouse`);
+                    const data = await res.json();
+                    if (Array.isArray(data)) sheetWarehouse = data;
+                } catch(e) { console.log("Warehouse fetch failed, using AI only"); }
+            }
+
+            // 嘗試從題庫產生題目
+            // 這裡簡化：只處理單字模式的題庫，其他模式還是叫 AI
+            let fromSheet = [];
+            if (currentMode === 'vocab' && sheetWarehouse.length > 0) {
+                // 隨機挑題
+                const shuffled = [...sheetWarehouse].sort(() => 0.5 - Math.random());
+                const picks = shuffled.slice(0, config.total);
+                
+                fromSheet = picks.map(p => ({
+                    type: 'Vocab',
+                    prompt: `請問 [${p.word}] 的中文?`,
+                    speak_text: p.word,
+                    answer: p.chinese,
+                    hint: p.level || '',
+                    options: generateOptionsFromWarehouse(p.chinese)
+                }));
+            }
+
+            // 如果題庫夠，直接開始
+            if (fromSheet.length >= config.total) {
+                questionBank = fromSheet;
                 game_start();
                 return;
             }
 
-            sys_showScreen('screen-loading');
-            document.getElementById('loading-text').innerText = `Generating ${config.total} questions...`;
-
+            // 題庫不夠，呼叫 AI 補足 (或全部 AI)
+            document.getElementById('loading-text').innerText = `題庫不足，AI 生成中...`;
             try {
                 const prompt = game_getBatchPrompt(config.total);
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${sys_getApiKey()}`, {
@@ -330,8 +345,8 @@
                 if (f !== -1 && l !== -1) raw = raw.substring(f, l + 1);
                 
                 questionBank = JSON.parse(raw);
-                if (!Array.isArray(questionBank)) throw new Error("Data Error");
                 
+                // Post-processing
                 questionBank = questionBank.map(q => {
                     if (currentMode === 'vocab') {
                         const engMatch = q.prompt.match(/[a-zA-Z\-\s']+/);
@@ -339,16 +354,27 @@
                     } else {
                         if(!q.speak_text) q.speak_text = q.answer;
                     }
-                    q.mode = currentMode;
                     return q;
                 });
 
                 game_start();
             } catch(e) {
                 console.error(e);
-                alert("AI Busy. Please retry.");
+                alert("AI 生成失敗");
                 sys_showScreen('screen-settings');
             }
+        }
+
+        // Helper: 從倉庫產生錯誤選項
+        function generateOptionsFromWarehouse(correctAnswer) {
+            if (sheetWarehouse.length < 4) return ["選項A", "選項B", "選項C", correctAnswer].sort(() => 0.5 - Math.random());
+            
+            let opts = [correctAnswer];
+            while(opts.length < 4) {
+                const r = sheetWarehouse[Math.floor(Math.random() * sheetWarehouse.length)].chinese;
+                if (!opts.includes(r)) opts.push(r);
+            }
+            return opts.sort(() => 0.5 - Math.random());
         }
 
         function game_start() {
@@ -366,7 +392,6 @@
             document.getElementById('end-correct').innerText=state.correct;
             document.getElementById('end-wrong').innerText=state.wrong;
             document.getElementById('end-score').innerText=state.score;
-            document.getElementById('mistake-alert').classList.toggle('hidden', state.wrong === 0);
             sys_showScreen('screen-summary');
             sys_uploadLog(); 
         }
@@ -411,7 +436,7 @@
             let masteryDisplay = (currentMode === 'review') ? `<span class="absolute top-0 right-0 bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-bl-xl">熟練度: ${currentData.mastery}/10</span>` : '';
 
             let html='';
-            const qMode = currentData.mode || currentMode;
+            const qMode = currentData.mode || currentMode; // Handle review mode mixing
 
             if(qMode!=='sentence'&&qMode!=='e2c'&&qMode!=='c2e'&&opts.length>0){
                 html=`<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">${opts.map(o=>`<button onclick="game_check('${o.replace(/'/g,"\\'")}')" class="p-4 border-2 border-slate-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 text-left font-bold text-lg transition-all">${o}</button>`).join('')}</div>`;
@@ -421,7 +446,7 @@
                 html=`<div class="w-full space-y-4"><textarea id="inp-ans" class="w-full p-4 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 text-center text-xl" rows="2" placeholder="輸入答案"></textarea><button onclick="game_check(document.getElementById('inp-ans').value)" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">Check</button></div>`;
             }
             
-            ga.innerHTML=`<div class="w-full max-w-2xl text-center fade-in relative overflow-hidden">${masteryDisplay}<div class="mb-6"><span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold">${currentData.type}</span><div class="flex items-center justify-center mt-2 mb-2"><h2 class="text-2xl md:text-3xl font-black text-slate-800">${currentData.prompt}</h2>${qMode!=='c2e'?speakBtn:''}</div>${currentData.hint?`<p class="text-slate-400 text-sm">Hint: ${currentData.hint}</p>`:''}</div>${html}</div>`;
+            ga.innerHTML=`<div class="w-full max-w-2xl text-center fade-in relative overflow-hidden">${masteryDisplay}<div class="mb-6"><span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold">${currentData.type || 'Quiz'}</span><div class="flex items-center justify-center mt-2 mb-2"><h2 class="text-2xl md:text-3xl font-black text-slate-800">${currentData.prompt}</h2>${qMode!=='c2e'?speakBtn:''}</div>${currentData.hint?`<p class="text-slate-400 text-sm">Hint: ${currentData.hint}</p>`:''}</div>${html}</div>`;
             document.getElementById('ui-current').innerText = state.qIdx + 1;
             if (config.autoplay) setTimeout(() => { util_speak(currentData.speak_text); }, 600);
             game_startTimer();
@@ -468,9 +493,9 @@
 
             if(isCorrect){
                 state.correct++;state.score+=10;document.getElementById('ui-score').innerText=state.score;util_speak(currentData.speak_text);
-                if(currentMode === 'review' || currentData.mode) updateMistakeMastery(currentData);
+                if(currentMode === 'review' || currentData.mode) sys_updateMastery(currentData); // Update GAS mastery
             }else{
-                state.wrong++; saveMistake(currentData);
+                state.wrong++; sys_saveMistake(currentData); // Save to GAS
             }
             
             const col=isCorrect?'green':'red'; const title=timeout?'Time\'s up':(isCorrect?'Correct!':'Wrong');
@@ -497,7 +522,6 @@
             if(k) document.getElementById('api-key-input').value=k;
             if(gas) document.getElementById('gas-url-input').value=gas;
             else document.getElementById('gas-url-input').value=DEFAULT_GAS_URL;
-            
             sys_showScreen('screen-login'); initVoices();
         };
     </script>
